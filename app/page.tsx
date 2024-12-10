@@ -1,101 +1,113 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link"; // Import the Link component
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [rating, setRating] = useState<string>("");
+  const [comment, setComment] = useState<string>("");
+  const [feedbackList, setFeedbackList] = useState<
+    { id: number; rating: string; comment: string; status: string }[]
+  >([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        const response = await fetch("/api/feedback");
+        if (response.ok) {
+          const data = await response.json();
+          // Filter only approved feedback
+          const approvedFeedback = data.filter(
+            (item: { status: string }) => item.status === "Approved"
+          );
+          setFeedbackList(approvedFeedback);
+        }
+      } catch (error) {
+        console.error("Error fetching feedback", error);
+      }
+    };
+    fetchFeedback();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const response = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating, comment }),
+    });
+
+    if (response.ok) {
+      alert("Feedback submitted!");
+      setRating("");
+      setComment("");
+    } else {
+      alert("Error submitting feedback. Please try again.");
+    }
+  };
+
+  // Compute the average of the approved ratings
+  const computeAverageRating = () => {
+    if (feedbackList.length === 0) return 0; // No feedback, return 0
+    const totalRating = feedbackList.reduce((sum, feedback) => sum + parseInt(feedback.rating), 0);
+    return (totalRating / feedbackList.length).toFixed(2); // Calculate average and round to 2 decimal places
+  };
+
+  return (
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
+      {/* Link to Admin Dashboard */}
+      <Link href="/admin" style={{ marginBottom: "20px", display: "block" }}>
+        Go to Admin Dashboard
+      </Link>
+
+      <h1>Submit Your Feedback</h1>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: "10px" }}>
+          <label>
+            Rating (1 to 5):
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={rating}
+              onChange={(e) => setRating(e.target.value)}
+              required
+              style={{ marginLeft: "10px" }}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </label>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div style={{ marginBottom: "10px" }}>
+          <label>
+            Comment:
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              required
+              style={{ display: "block", width: "100%", marginTop: "5px" }}
+            />
+          </label>
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+
+      <h2 style={{ marginTop: "30px" }}>Approved Feedback</h2>
+      {feedbackList.length === 0 ? (
+        <p>No approved feedback yet.</p>
+      ) : (
+        <div>
+          <p>
+            <strong>Average Rating:</strong> {computeAverageRating()}
+          </p>
+          <ul>
+            {feedbackList.map((feedback) => (
+              <li key={feedback.id}>
+                <strong>Rating:</strong> {feedback.rating} |{" "}
+                <strong>Comment:</strong> {feedback.comment}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
